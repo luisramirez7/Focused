@@ -1,0 +1,8 @@
+{
+  "email_id": "S-013",
+  "from_address": "ben.goldberg@example.com",
+  "from_name": "Ben Goldberg",
+  "subject": "Elm St showing",
+  "body": "I'd like to book a showing at 48 Elm St for Friday. -Ben",
+  "received_at": "2026-06-08T09:15:00-07:00"
+}

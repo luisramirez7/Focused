@@ -1,0 +1,8 @@
+{
+  "email_id": "S-012",
+  "from_address": "jordan.rivera@example.com",
+  "from_name": "Jordan Rivera",
+  "subject": "Willow Ln Saturday morning",
+  "body": "Hi, can we see 2210 Willow Ln on Saturday June 13 at 10am? If that doesn't work, anything that afternoon is fine.\n\nJordan",
+  "received_at": "2026-06-08T09:15:00-07:00"
+}

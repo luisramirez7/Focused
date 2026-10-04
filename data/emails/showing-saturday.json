@@ -1,0 +1,8 @@
+{
+  "email_id": "S-010",
+  "from_address": "maya.chen@example.com",
+  "from_name": "Maya Chen",
+  "subject": "Tour 42 Oak St Saturday?",
+  "body": "Hi! Could I tour 42 Oak St this Saturday (June 13) at 10am?\n\nThanks,\nMaya",
+  "received_at": "2026-06-08T09:15:00-07:00"
+}
