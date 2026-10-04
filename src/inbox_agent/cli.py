@@ -164,6 +164,37 @@ def run(
     raise typer.Exit(2 if result.status in ("no_outcome", "step_limit") else 1)
 
 
+@app.command("eval")
+def eval_(
+    model: Annotated[str, typer.Option(help="claude | glm")] = "glm",
+    variant: Annotated[str, typer.Option(help="experiment variant name")] = "baseline",
+    reps: Annotated[int, typer.Option(help="repetitions per example")] = 3,
+    split: Annotated[str, typer.Option(help="dev | heldout | all")] = "all",
+    slice_: Annotated[str | None, typer.Option("--slice", help="only this slice")] = None,
+    level: Annotated[str, typer.Option(help="all | retrieval | first-step | full")] = "all",
+) -> None:
+    """Run LangSmith experiments and write reports to reports/."""
+    from .evals import run_eval
+
+    try:
+        names = run_eval.run(model, variant, reps, split, slice_, level)
+    except ConfigError as e:
+        exit_on_config_error(e)
+    console.print("Experiments: " + ", ".join(names))
+
+
+@app.command()
+def draft(
+    slice_: Annotated[str, typer.Option("--slice", help="dataset slice to draft for")],
+    n: Annotated[int, typer.Option(help="number of drafts")] = 5,
+) -> None:
+    """Draft candidate emails for a slice into data/datasets/drafts/ (human review required)."""
+    from .evals.draft import draft as run_draft
+
+    for row in run_draft(slice_, n):
+        console.print(Panel(row["body"], title=row["subject"], subtitle=row["why_tricky"]))
+
+
 @app.command("setup-langsmith")
 def setup_langsmith(
     datasets: Annotated[bool, typer.Option("--datasets")] = False,

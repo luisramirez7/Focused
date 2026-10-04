@@ -1,0 +1,26 @@
+{"id": "R-001", "inputs": {"query": "Do I need to sign anything before touring a home with an agent?"}, "outputs": {"expected_doc_ids": ["showing-policy", "buyer-agreement-faq"]}, "metadata": {"category": "policy"}}
+{"id": "R-002", "inputs": {"query": "What hours can I schedule a private showing?"}, "outputs": {"expected_doc_ids": ["showing-policy"]}, "metadata": {"category": "policy"}}
+{"id": "R-003", "inputs": {"query": "Can I see a house on Sunday?"}, "outputs": {"expected_doc_ids": ["showing-policy", "open-houses"]}, "metadata": {"category": "policy"}}
+{"id": "R-004", "inputs": {"query": "How much notice do you need to set up a tour?"}, "outputs": {"expected_doc_ids": ["showing-policy"]}, "metadata": {"category": "policy"}}
+{"id": "R-005", "inputs": {"query": "Is my showing confirmed as soon as I ask for it?"}, "outputs": {"expected_doc_ids": ["showing-policy"]}, "metadata": {"category": "policy"}}
+{"id": "R-006", "inputs": {"query": "Can I tour a home that's already under contract?"}, "outputs": {"expected_doc_ids": ["showing-policy"]}, "metadata": {"category": "policy"}}
+{"id": "R-007", "inputs": {"query": "What is a buyer agreement and does it lock me in?"}, "outputs": {"expected_doc_ids": ["buyer-agreement-faq"]}, "metadata": {"category": "faq"}}
+{"id": "R-008", "inputs": {"query": "Is this a safe neighborhood for kids?"}, "outputs": {"expected_doc_ids": ["fair-housing-guidance"]}, "metadata": {"category": "fair_housing"}}
+{"id": "R-009", "inputs": {"query": "Where can I find school boundary information?"}, "outputs": {"expected_doc_ids": ["fair-housing-guidance"]}, "metadata": {"category": "fair_housing"}}
+{"id": "R-010", "inputs": {"query": "I want to make an offer, can you accept it for the seller?"}, "outputs": {"expected_doc_ids": ["offers-and-negotiation"]}, "metadata": {"category": "policy"}}
+{"id": "R-011", "inputs": {"query": "What's the lowest price the seller will take?"}, "outputs": {"expected_doc_ids": ["confidentiality-policy"]}, "metadata": {"category": "policy"}}
+{"id": "R-012", "inputs": {"query": "Why is the seller moving?"}, "outputs": {"expected_doc_ids": ["confidentiality-policy"]}, "metadata": {"category": "policy"}}
+{"id": "R-013", "inputs": {"query": "What do HOA dues usually cover?"}, "outputs": {"expected_doc_ids": ["hoa-basics"]}, "metadata": {"category": "hoa"}}
+{"id": "R-014", "inputs": {"query": "Will I see the HOA budget and meeting minutes?"}, "outputs": {"expected_doc_ids": ["hoa-basics"]}, "metadata": {"category": "hoa"}}
+{"id": "R-015", "inputs": {"query": "Can I get the seller's property disclosure statement?"}, "outputs": {"expected_doc_ids": ["disclosures-overview"]}, "metadata": {"category": "disclosure"}}
+{"id": "R-016", "inputs": {"query": "Did the inspection find any problems with the house?"}, "outputs": {"expected_doc_ids": ["disclosures-overview"]}, "metadata": {"category": "disclosure"}}
+{"id": "R-017", "inputs": {"query": "How much earnest money is typical and who holds it?"}, "outputs": {"expected_doc_ids": ["earnest-money"]}, "metadata": {"category": "faq"}}
+{"id": "R-018", "inputs": {"query": "Can I pay my deposit with a credit card by email?"}, "outputs": {"expected_doc_ids": ["earnest-money", "email-safety"]}, "metadata": {"category": "faq"}}
+{"id": "R-019", "inputs": {"query": "Should I get a 15 or 30 year mortgage?"}, "outputs": {"expected_doc_ids": ["financing-referrals"]}, "metadata": {"category": "policy"}}
+{"id": "R-020", "inputs": {"query": "Can you recommend a lender?"}, "outputs": {"expected_doc_ids": ["financing-referrals"]}, "metadata": {"category": "policy"}}
+{"id": "R-021", "inputs": {"query": "Can you explain the tax implications of a 1031 exchange?"}, "outputs": {"expected_doc_ids": ["legal-tax-referrals"]}, "metadata": {"category": "policy"}}
+{"id": "R-022", "inputs": {"query": "Where is your office and when are you open?"}, "outputs": {"expected_doc_ids": ["office-info"]}, "metadata": {"category": "office"}}
+{"id": "R-023", "inputs": {"query": "When are open houses usually held?"}, "outputs": {"expected_doc_ids": ["open-houses"]}, "metadata": {"category": "faq"}}
+{"id": "R-024", "inputs": {"query": "Do your listings have 3D virtual tours?"}, "outputs": {"expected_doc_ids": ["virtual-tours"]}, "metadata": {"category": "faq"}}
+{"id": "R-025", "inputs": {"query": "Do I need to be pre-approved before I can see a house?"}, "outputs": {"expected_doc_ids": ["pre-approval-faq", "showing-policy"]}, "metadata": {"category": "faq"}}
+{"id": "R-026", "inputs": {"query": "How do I verify wiring instructions safely?"}, "outputs": {"expected_doc_ids": ["email-safety"]}, "metadata": {"category": "policy"}}
