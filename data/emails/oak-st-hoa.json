@@ -1,0 +1,8 @@
+{
+  "email_id": "S-001",
+  "from_address": "maya.chen@example.com",
+  "from_name": "Maya Chen",
+  "subject": "HOA fees at 42 Oak St",
+  "body": "Hi there,\n\nI saw the townhome at 42 Oak St online. What are the monthly HOA fees, and what do they cover?\n\nThanks,\nMaya",
+  "received_at": "2026-06-08T09:15:00-07:00"
+}

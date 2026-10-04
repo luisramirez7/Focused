@@ -1,0 +1,20 @@
+{
+  "agents": [
+    {"agent_id": "A-0", "name": "Harborview Realty Front Desk", "email": "frontdesk@harborview-realty.example"},
+    {"agent_id": "A-1", "name": "Dana Whitfield", "email": "dana@harborview-realty.example"},
+    {"agent_id": "A-2", "name": "Marcus Lee", "email": "marcus@harborview-realty.example"},
+    {"agent_id": "A-3", "name": "Priya Natarajan", "email": "priya@harborview-realty.example"}
+  ],
+  "contacts": [
+    {"email": "maya.chen@example.com", "name": "Maya Chen", "buyer_agreement": "signed", "assigned_agent_id": "A-1"},
+    {"email": "jordan.rivera@example.com", "name": "Jordan Rivera", "buyer_agreement": "signed", "assigned_agent_id": "A-2"},
+    {"email": "sam.okafor@example.com", "name": "Sam Okafor", "buyer_agreement": "not_signed", "assigned_agent_id": "A-3"},
+    {"email": "elena.petrova@example.com", "name": "Elena Petrova", "buyer_agreement": "signed", "assigned_agent_id": "A-3"},
+    {"email": "chris.nguyen@example.com", "name": "Chris Nguyen", "buyer_agreement": "not_signed", "assigned_agent_id": null},
+    {"email": "aisha.bello@example.com", "name": "Aisha Bello", "buyer_agreement": "signed", "assigned_agent_id": "A-1"},
+    {"email": "tom.harris@example.com", "name": "Tom Harris", "buyer_agreement": "signed", "assigned_agent_id": "A-2"},
+    {"email": "lucia.romero@example.com", "name": "Lucia Romero", "buyer_agreement": "not_signed", "assigned_agent_id": "A-1"},
+    {"email": "ben.goldberg@example.com", "name": "Ben Goldberg", "buyer_agreement": "signed", "assigned_agent_id": "A-3"},
+    {"email": "keiko.tanaka@example.com", "name": "Keiko Tanaka", "buyer_agreement": "signed", "assigned_agent_id": "A-2"}
+  ]
+}

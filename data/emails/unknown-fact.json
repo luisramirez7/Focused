@@ -1,0 +1,8 @@
+{
+  "email_id": "S-004",
+  "from_address": "tom.harris@example.com",
+  "from_name": "Tom Harris",
+  "subject": "Seabreeze Ln question",
+  "body": "Hey, quick one: for 12 Seabreeze Ln, what's the average monthly electricity bill and which elementary school bus stops nearby?\n\nTom",
+  "received_at": "2026-06-08T09:15:00-07:00"
+}

@@ -4,3 +4,9 @@ __pycache__/
 *.pyc
 .DS_Store
 .claude/settings.local.json
+runs/
+.pytest_cache/
+.ruff_cache/
+data/datasets/drafts/
+*.egg-info/
+dist/
