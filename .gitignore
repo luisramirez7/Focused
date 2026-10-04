@@ -10,3 +10,4 @@ runs/
 data/datasets/drafts/
 *.egg-info/
 dist/
+specs/
