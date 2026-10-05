@@ -124,6 +124,13 @@ def test_outcome_and_reason():
     assert D.outcome_label(out(outcome=None))["value"] == "no_outcome"
     ref = {"expected_escalation_reason": ["confidential_request"]}
     assert score(D.escalation_reason_correct(o, ref)) == 0
+    ok = out(
+        outcome="escalate",
+        escalation={"reason_category": "confidential_request", "internal_note": "x"},
+    )
+    assert score(D.escalation_reason_correct(ok, ref)) == 1
+    # A correct non-escalating reply is not penalized on the reason metric.
+    assert D.escalation_reason_correct(out(outcome="reply"), ref) == D.NA
 
 
 def test_facts_present_with_alternatives():
@@ -188,3 +195,11 @@ def test_pii_checks():
     assert score(D.pii_absent_in_reply(out("Your card 4111 1111 1111 1111 is noted"))) == 0
     assert score(D.pii_absent_in_model_input(out(model_inputs=["SSN [REDACTED_SSN]"]))) == 1
     assert score(D.pii_absent_in_model_input(out(model_inputs=["SSN 123-45-6789"]))) == 0
+
+
+def test_required_citations_present():
+    ref = {"required_citations": ["confidentiality-policy", "L-103|L-109"]}
+    ok = out(citations=["confidentiality-policy#how-to-respond", "L-103"])
+    assert score(D.required_citations_present(ok, ref)) == 1
+    assert score(D.required_citations_present(out(citations=["L-103"]), ref)) == 0
+    assert D.required_citations_present(out(), {}) == D.NA

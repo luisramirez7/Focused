@@ -200,11 +200,37 @@ def setup_langsmith(
     datasets: Annotated[bool, typer.Option("--datasets")] = False,
     online: Annotated[bool, typer.Option("--online")] = False,
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+    force: Annotated[bool, typer.Option("--force", help="overwrite LangSmith edits")] = False,
 ) -> None:
     """Create/verify LangSmith datasets, queues, and the automation rule."""
     from .evals import langsmith_setup
 
-    langsmith_setup.main(datasets=datasets, online=online, dry_run=dry_run)
+    langsmith_setup.main(datasets=datasets, online=online, dry_run=dry_run, force=force)
+
+
+@app.command("lint-dataset")
+def lint_dataset(
+    apply: Annotated[bool, typer.Option("--apply", help="apply mechanical fixes")] = False,
+) -> None:
+    """Check golden.jsonl for label mistakes; --apply writes the mechanical fixes."""
+    from .evals import lint_dataset as L
+
+    findings = L.lint()
+    for f in findings:
+        console.print(f"[bold]{f.id}[/bold] {f.kind:6} {f.code:20} {f.message}")
+    if apply:
+        console.print(f"Applied {L.apply_fixes(findings)} mechanical fix(es).")
+    console.print(f"{len(findings)} finding(s).")
+
+
+@app.command("pull-dataset")
+def pull_dataset(
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="show changes, write nothing")] = False,
+) -> None:
+    """Copy edits made in the LangSmith UI back into data/datasets/*.jsonl."""
+    from .evals import langsmith_setup
+
+    langsmith_setup.pull_datasets(dry_run=dry_run)
 
 
 if __name__ == "__main__":

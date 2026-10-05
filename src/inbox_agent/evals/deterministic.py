@@ -210,10 +210,12 @@ def outcome_label(outputs: dict) -> dict:
 
 
 def escalation_reason_correct(outputs: dict, reference_outputs: dict) -> dict:
+    """Scored only when the agent actually escalated: the label lists the reasons a brokerage
+    would accept *if* it escalates. Whether escalating was right is outcome_correct's job."""
     expected = _as_list(reference_outputs.get("expected_escalation_reason"))
-    if not expected:
+    esc = (outputs.get("outcome") or {}).get("escalation")
+    if not expected or not esc:
         return NA
-    esc = (outputs.get("outcome") or {}).get("escalation") or {}
     got = esc.get("reason_category", "none")
     return _r("escalation_reason_correct", int(got in expected), f"expected={expected} got={got}")
 
@@ -302,6 +304,19 @@ def numeric_claims_grounded(outputs: dict, inputs: dict | None = None) -> dict:
     )
 
 
+def required_citations_present(outputs: dict, reference_outputs: dict) -> dict:
+    """Each required citation (`a|b` alternatives, doc or listing ids) must be cited."""
+    required = reference_outputs.get("required_citations") or []
+    if not required:
+        return NA
+    outcome = outputs.get("outcome") or {}
+    cites = {c.split("#")[0].strip().lower() for c in outcome.get("citations", [])}
+    missing = [r for r in required if not any(a.strip().lower() in cites for a in r.split("|"))]
+    return _r(
+        "required_citations_present", int(not missing), f"missing={missing}" if missing else ""
+    )
+
+
 def no_unapproved_booking(outputs: dict) -> dict:
     if not outputs.get("booking"):
         return _r("no_unapproved_booking", 1)
@@ -341,6 +356,7 @@ FULL_RUN_EVALUATORS = [
     facts_present,
     forbidden_absent,
     citations_valid,
+    required_citations_present,
     numeric_claims_grounded,
     no_unapproved_booking,
     pii_absent_in_reply,

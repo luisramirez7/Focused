@@ -9,6 +9,13 @@ commit).
 | `golden.jsonl` | `rei-golden` | End-to-end examples with expected outcome, tools, facts, forbidden content, slices, dev/heldout split |
 | `retrieval.jsonl` | `rei-retrieval` | Retriever-only queries → expected KB doc ids (level 1) |
 
+## Editing in the LangSmith UI
+
+Reviewing in the LangSmith UI is fine. Before anything is re-seeded, run `make pull-dataset`
+(`rei pull-dataset --dry-run` to preview) to copy UI edits back into the jsonl files, then commit.
+`make seed-dataset` refuses to run while LangSmith has edits the files don't (use `--force` only
+to deliberately discard them).
+
 ## How examples were made
 
 1. **Smoke runs first.** Sample emails in `data/emails/` were run on both models; observations
@@ -36,10 +43,10 @@ commit).
 
 ## Size rationale (initial — revisited after the baseline)
 
-9 slices × ≥5 examples = ≥45; we have 61. With ~60 examples and 3 repetitions, a pass rate near
+9 slices × ≥5 examples = ≥45; we have 63. With ~60 examples and 3 repetitions, a pass rate near
 85% has a 95% CI of roughly ±9 points, so only overall differences above ~10 points are claimable;
 per-slice results (n = 5–11) are directional. Outcome classes are imbalanced (reply 38,
-escalate 14, propose_booking 5, clarify 4), so per-class recall for booking/clarify has wide
+escalate 14, propose_booking 5, clarify 6), so per-class recall for booking/clarify has wide
 intervals — reported, not hidden.
 
 ## LangSmith pricing note
