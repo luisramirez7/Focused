@@ -1,4 +1,4 @@
-.PHONY: setup run studio test lint seed-dataset pull-dataset eval-baseline eval compare calibrate
+.PHONY: setup run ui studio test lint seed-dataset pull-dataset eval-baseline eval compare calibrate
 
 MODEL ?= claude
 VARIANT ?= baseline
@@ -12,6 +12,11 @@ setup:
 
 run:
 	uv run rei run $(EMAIL) --model $(MODEL)
+
+# Streamlit demo: run an email with in-page booking approval, browse eval runs.
+ui:
+	uv sync --extra ui
+	uv run streamlit run streamlit_app.py
 
 # LangGraph Studio: input an Email (e.g. data/emails/*.json), approve bookings in the UI.
 # Uses AGENT_MODEL from .env.
