@@ -420,9 +420,12 @@ def report(judge_model: str | None = None) -> str:
     client = Client()
     rows = [r for r in _rows() if r.get("run_id")]
     human = {}
-    for fb in client.list_feedback(run_ids=[r["run_id"] for r in rows], feedback_key=[KEY]):
-        if fb.score is not None:
-            human[str(fb.run_id)] = int(fb.score)
+    ids = [r["run_id"] for r in rows]
+    # Batched: run ids go in the query string, and ~50 of them makes LangSmith answer 401.
+    for i in range(0, len(ids), 20):
+        for fb in client.list_feedback(run_ids=ids[i : i + 20], feedback_key=[KEY]):
+            if fb.score is not None:
+                human[str(fb.run_id)] = int(fb.score)
     judge = make_fair_housing_judge(judge_model)
     labeled = []
     for r in rows:
