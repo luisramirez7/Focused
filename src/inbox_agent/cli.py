@@ -221,6 +221,7 @@ def compare(
 @app.command()
 def calibrate(
     build: Annotated[bool, typer.Option("--build", help="build the calibration set")] = False,
+    extend: Annotated[bool, typer.Option("--extend", help="add round-2 replies")] = False,
     push: Annotated[bool, typer.Option("--push", help="queue replies for human labels")] = False,
     report: Annotated[bool, typer.Option("--report", help="judge vs human agreement")] = False,
     enqueue: Annotated[bool, typer.Option("--enqueue", help="re-queue recorded runs")] = False,
@@ -230,6 +231,8 @@ def calibrate(
 
     if build:
         C.build()
+    if extend:
+        C.extend()
     if push:
         C.push()
     if enqueue:
