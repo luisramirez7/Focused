@@ -15,7 +15,7 @@ from ..config import REPORTS_DIR, settings
 from ..prompts import PROMPT_VERSION
 from . import deterministic as D
 from . import stats as S
-from .summary import CLASSES, SUMMARY_EVALUATORS, confusion
+from .summary import CLASSES, confusion
 from .targets import first_step_target, full_run_target, retriever_target
 
 console = Console()
@@ -164,7 +164,8 @@ def run(
             f"rei-{variant}-{model}",
             reps,
             {**metadata, "level": "full"},
-            SUMMARY_EVALUATORS,
+            # Summary metrics (confusion matrix, per-class P/R, per-slice, gates) are computed
+            # locally in the report instead of uploaded as ~22 extra LangSmith feedback keys.
         )
         experiments.append(write_report(res, "full", metadata, golden))
     return experiments

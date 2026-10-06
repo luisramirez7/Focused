@@ -157,6 +157,11 @@ def push() -> str:
         r["run_id"] = str(rid)
         run_ids.append(rid)
     CAL_PATH.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    # The rubric item only attaches if its feedback key already exists.
+    if KEY not in {c.feedback_key for c in client.list_feedback_configs()}:
+        client.create_feedback_config(KEY, feedback_config={
+            "type": "categorical",
+            "categories": [{"value": 1, "label": "Pass"}, {"value": 0, "label": "Fail"}]})
     queues = list(client.list_annotation_queues(name=QUEUE))
     queue = (
         queues[0]
