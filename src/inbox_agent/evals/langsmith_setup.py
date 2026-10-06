@@ -30,9 +30,21 @@ def _client():
 
 
 def check_connection() -> None:
+    if not os.environ.get("LANGSMITH_API_KEY"):
+        console.print("[yellow]LangSmith skipped: LANGSMITH_API_KEY is empty in .env[/yellow]")
+        return
+    from langsmith.utils import LangSmithError
+
     client = _client()
     project = os.environ.get("LANGSMITH_PROJECT", "Focused")
-    datasets = [d.name for d in client.list_datasets(dataset_name_contains="rei-")]
+    try:
+        datasets = [d.name for d in client.list_datasets(dataset_name_contains="rei-")]
+    except LangSmithError as e:
+        console.print(
+            f"[yellow]LangSmith check failed ({type(e).__name__}): "
+            "check LANGSMITH_API_KEY in .env[/yellow]"
+        )
+        return
     console.print(
         f"LangSmith OK · project [bold]{project}[/bold] · rei datasets: "
         f"{', '.join(datasets) or 'none yet'}"
