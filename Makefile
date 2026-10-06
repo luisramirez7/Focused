@@ -8,7 +8,6 @@ EMAIL ?= data/emails/oak-st-hoa.json
 setup:
 	uv sync
 	@test -f .env || (cp .env.example .env && echo "Created .env from .env.example — fill in your keys.")
-	uv run rei setup-langsmith --dry-run
 
 run:
 	uv run rei run $(EMAIL) --model $(MODEL)

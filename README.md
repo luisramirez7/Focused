@@ -61,9 +61,10 @@ Requires [uv](https://docs.astral.sh/uv/) and API keys for Anthropic (Claude) an
 (embeddings), plus LangSmith for tracing and evals.
 
 ```bash
-make setup                                   # install, create .env from .env.example, check LangSmith
+make setup                                   # install, create .env from .env.example
 make test                                    # offline unit tests, no API calls
 make run EMAIL=data/emails/oak-st-hoa.json   # one email, streamed, with the approval prompt
+make ui                                      # Streamlit demo: run emails, approve bookings, browse evals
 ```
 
 Other useful commands:
