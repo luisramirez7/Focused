@@ -29,6 +29,11 @@ class RunContext:
     fault_plan: FaultPlan = field(default_factory=FaultPlan)
     decided_by: str = "coordinator"
 
+    def __post_init__(self) -> None:
+        # Studio passes context as JSON, so the plan arrives as {tool: [faults]}.
+        if not isinstance(self.fault_plan, FaultPlan):
+            self.fault_plan = FaultPlan(self.fault_plan)
+
 
 def _fault(runtime: ToolRuntime[RunContext] | None, tool_name: str) -> str:
     plan = runtime.context.fault_plan if runtime and runtime.context else None

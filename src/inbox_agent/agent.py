@@ -18,6 +18,7 @@ from langchain.agents.middleware import (
     ToolCallLimitMiddleware,
     ToolErrorMiddleware,
     ToolRetryMiddleware,
+    before_agent,
 )
 from langchain.agents.structured_output import ToolStrategy
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
@@ -47,6 +48,18 @@ InterruptHandler = Callable[[dict], dict]
 EventHandler = Callable[[str, Any], None]
 
 
+class MissingEmailError(ValueError):
+    """The agent was started without an inbound email to answer."""
+
+
+@before_agent(name="RequireInboundEmail")
+def require_inbound_email(state, runtime) -> None:
+    # Without this, a model given only the system prompt invents a sender and a request (found in
+    # Studio: it built one from the tool-description examples, then filed a real escalation).
+    if not any(isinstance(m, HumanMessage) and m.text.strip() for m in state["messages"]):
+        raise MissingEmailError("No inbound email to handle; refusing to start the agent.")
+
+
 def _retry_exhausted(exc: Exception) -> str:
     return (
         f"ERROR: tool temporarily unavailable after retries ({exc}). "
@@ -61,6 +74,7 @@ def _tool_error(exc: Exception, request) -> str:
 
 def build_middleware() -> list:
     return [
+        require_inbound_email,
         *build_pii_middleware(),
         HumanInTheLoopMiddleware(
             interrupt_on={"book_showing": {"allowed_decisions": ["approve", "edit", "reject"]}},
@@ -84,7 +98,20 @@ def build_middleware() -> list:
     ]
 
 
-def build_agent(model_name: AgentModelName, model=None):
+def default_checkpointer() -> InMemorySaver:
+    return InMemorySaver(
+        serde=JsonPlusSerializer(
+            allowed_msgpack_modules=[
+                ("inbox_agent.schemas", "Outcome"),
+                ("inbox_agent.schemas", "EscalationDetail"),
+                ("inbox_agent.schemas", "BookingProposalRef"),
+            ]
+        )
+    )
+
+
+def build_agent(model_name: AgentModelName, model=None, checkpointer: Any = "default"):
+    """`checkpointer=None` builds a graph for a host that brings its own (Studio, parent graph)."""
     return create_agent(
         model or make_agent_model(model_name),
         tools=TOOLS,
@@ -92,15 +119,7 @@ def build_agent(model_name: AgentModelName, model=None):
         middleware=build_middleware(),
         response_format=ToolStrategy(Outcome, handle_errors=True),
         context_schema=RunContext,
-        checkpointer=InMemorySaver(
-            serde=JsonPlusSerializer(
-                allowed_msgpack_modules=[
-                    ("inbox_agent.schemas", "Outcome"),
-                    ("inbox_agent.schemas", "EscalationDetail"),
-                    ("inbox_agent.schemas", "BookingProposalRef"),
-                ]
-            )
-        ),
+        checkpointer=default_checkpointer() if checkpointer == "default" else checkpointer,
         name="rei-inbox-agent",
     )
 

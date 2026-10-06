@@ -7,7 +7,9 @@ exhausted, calls succeed normally.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Literal
+from typing import Any, Literal
+
+from pydantic_core import core_schema
 
 Fault = Literal["ok", "timeout", "error", "empty", "malformed"]
 VALID_FAULTS: frozenset[str] = frozenset({"ok", "timeout", "error", "empty", "malformed"})
@@ -37,6 +39,17 @@ class FaultPlan:
 
     def __bool__(self) -> bool:
         return any(self._queues.values())
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source: Any, handler: Any) -> core_schema.CoreSchema:
+        """Validate from `{tool: [faults]}` so Studio can render and edit a plan."""
+        as_dict = core_schema.no_info_after_validator_function(
+            cls, handler.generate_schema(dict[str, list[Fault]])
+        )
+        return core_schema.union_schema(
+            [core_schema.is_instance_schema(cls), as_dict],
+            serialization=core_schema.plain_serializer_function_ser_schema(cls.to_dict),
+        )
 
 
 def apply_fault(tool_name: str, plan: FaultPlan | None) -> Fault:

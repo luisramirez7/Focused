@@ -29,7 +29,11 @@ jev = ["langchain-typesafe==0.0.1a3"]
 rei = "inbox_agent.cli:app"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = [
+    "langgraph-cli[inmem]>=0.4.32",
+    "pytest>=8",
+    "ruff>=0.6",
+]
 
 [build-system]
 requires = ["hatchling"]

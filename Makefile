@@ -1,4 +1,4 @@
-.PHONY: setup run test lint seed-dataset eval-baseline eval compare calibrate monitor
+.PHONY: setup run studio test lint seed-dataset eval-baseline eval compare calibrate monitor
 
 MODEL ?= glm
 VARIANT ?= baseline
@@ -12,6 +12,11 @@ setup:
 
 run:
 	uv run rei run $(EMAIL) --model $(MODEL)
+
+# LangGraph Studio: input an Email (e.g. data/emails/*.json), approve bookings in the UI.
+# Uses AGENT_MODEL from .env.
+studio:
+	uv run langgraph dev
 
 test:
 	uv run pytest

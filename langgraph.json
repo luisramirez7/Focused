@@ -1,0 +1,9 @@
+{
+  "$schema": "https://langgra.ph/schema.json",
+  "python_version": "3.12",
+  "dependencies": ["."],
+  "graphs": {
+    "inbox_agent": "./src/inbox_agent/studio.py:make_graph"
+  },
+  "env": ".env"
+}
