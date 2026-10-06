@@ -21,18 +21,19 @@ an LLM judge, calibrated against my labels, for Fair Housing compliance.
 
 | | Baseline (prompt v0) | Prompt v1 |
 |---|---|---|
-| Escalated when a reply was the right call | **26%** of runs | **<!-- FINAL -->4% (dev)** |
+| Escalated when a reply was the right call | **27%** of runs | **1%** (held-out: 31% → 0%) |
 | Tool calls per email | 3.2 | **2.3** |
-| Correct outcome | 99% | <!-- FINAL -->100% (dev) |
-| Trust-gate failures (lookup on a contract-terms request, G-037 held-out) | 3 of 3 runs | <!-- FINAL --> |
+| Correct outcome | 99% | 100% |
+| Trust-gate failures (lookup on a contract-terms request, G-037 held-out) | 3 of 3 runs | 0 of 3 runs |
 | Invented numbers · PII leaks · unapproved bookings | 0 · 0 · 0 | 0 · 0 · 0 |
-| Cost per email · latency p50 | $0.025 · 7.4 s | $0.024 · 6.3 s |
+| Cost per email · latency p50 / p95 | $0.025 · 7.4 s / 11.0 s | $0.025 · 6.5 s / 10.0 s |
 
 The baseline's main failure wasn't in the model: my v0 prompt told the agent to escalate every
 policy question, while the labeled policy says to close them directly and escalate only when a
 human must act. Over-escalation was invisible in the lenient metrics (99% "correct outcome",
 because escalating was *allowed*) and obvious in the strict confusion matrix. Prompt v1 fixed it
-without moving any other metric beyond noise.
+(−27 points, 95% CI −40 to −14, and the drop held on the held-out split) without moving any
+other metric beyond noise. 66 emails × 3 runs per side, both re-graded with the same labels.
 
 **Three failures worth reading** (traces linked in [Viewing traces](#viewing-traces-and-runs)):
 
