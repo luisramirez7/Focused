@@ -218,6 +218,26 @@ def compare(
     console.print(cmp(resolve(before), resolve(after), split))
 
 
+@app.command()
+def calibrate(
+    build: Annotated[bool, typer.Option("--build", help="build the calibration set")] = False,
+    push: Annotated[bool, typer.Option("--push", help="queue replies for human labels")] = False,
+    report: Annotated[bool, typer.Option("--report", help="judge vs human agreement")] = False,
+    enqueue: Annotated[bool, typer.Option("--enqueue", help="re-queue recorded runs")] = False,
+) -> None:
+    """Calibrate the Fair Housing LLM judge against blind human labels."""
+    from .evals import calibrate as C
+
+    if build:
+        C.build()
+    if push:
+        C.push()
+    if enqueue:
+        C.enqueue()
+    if report:
+        C.report()
+
+
 @app.command("setup-langsmith")
 def setup_langsmith(
     datasets: Annotated[bool, typer.Option("--datasets")] = False,
