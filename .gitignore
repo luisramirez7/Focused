@@ -12,3 +12,7 @@ data/datasets/drafts/
 dist/
 specs/
 .langgraph_api/
+
+# spec-kit process tooling and specs stay local
+.specify/
+.claude/skills/

@@ -204,15 +204,8 @@ def pull_datasets(dry_run: bool = False) -> None:
         pull_dataset(name, filename, dry_run=dry_run)
 
 
-def main(
-    datasets: bool = False, online: bool = False, dry_run: bool = False, force: bool = False
-) -> None:
-    if dry_run or not (datasets or online):
+def main(datasets: bool = False, dry_run: bool = False, force: bool = False) -> None:
+    if dry_run or not datasets:
         check_connection()
         return
-    if datasets:
-        seed_datasets(force=force)
-    if online:
-        from .monitor import setup_online
-
-        setup_online()
+    seed_datasets(force=force)

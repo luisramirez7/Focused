@@ -19,14 +19,14 @@ to deliberately discard them).
 ## How examples were made
 
 1. **Smoke runs first.** Sample emails in `data/emails/` were run on both models; observations
-   (label ambiguity, reason drift, unchecked facts) live in `reports/notes/`.
+   (label ambiguity, reason drift, unchecked facts) live in `reports/archive/dev-smoke-notes/`.
 2. **Drafting.** Examples were drafted with a coding assistant (Claude Code) from the fixtures,
-   KB docs, smoke notes, and the spec's edge-case list. `rei draft --slice <slice>` generates
-   more candidates with Claude Haiku into `drafts/` (gitignored).
+   KB docs, smoke notes, and the spec's edge-case list. (A `rei draft` command that generated
+   more candidates with Claude Haiku was removed once the set was final; see git history.)
 3. **Human review (required).** Every example is reviewed by a person before it counts:
    expected outcome, acceptable alternatives, required facts, forbidden content. Reviewed
-   examples have `metadata.reviewed = true`; `metadata.source` records `hand`,
-   `synthetic-draft`, or `production-flagged` (promoted from monitoring).
+   examples have `metadata.reviewed = true`; `metadata.source` records `hand`
+   or `synthetic-draft`.
 
 ## Labeling conventions
 

@@ -201,7 +201,7 @@ latency and dropped GLM from further runs to keep the evaluation budget small.
 
 Claude Code (Opus 5.5) wrote most of the code, tests, fixtures and the first draft of the
 dataset, ran the experiments and drafted the analysis, using spec-kit (constitution → spec → plan
-→ tasks) to keep the scope explicit. What I did and checked myself: chose the domain and the
+→ tasks, kept local rather than in this repo) to keep the scope explicit. What I did and checked myself: chose the domain and the
 policies, reviewed and corrected every dataset label (including hard-fail rules the assistant
 hadn't proposed), approved every post-baseline label change, made the scope cuts, labeled the
 judge calibration set blind, and read the failing traces behind each conclusion. Several
@@ -213,6 +213,6 @@ evaluator bugs were found during that review rather than by the assistant.
 src/inbox_agent/        agent, tools, middleware wiring, CLI (rei)
 src/inbox_agent/evals/  evaluators, experiments, rescoring, calibration, dataset lint and sync
 data/                   fixtures, policy docs, sample emails, datasets, rubrics, calibration set
-reports/                experiment reports, raw results, analyses
+reports/                analyses, final experiment reports, raw results (superseded runs in archive/)
 tests/                  offline unit and integration tests
 ```

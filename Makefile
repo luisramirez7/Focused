@@ -1,4 +1,4 @@
-.PHONY: setup run studio test lint seed-dataset pull-dataset eval-baseline eval compare calibrate monitor
+.PHONY: setup run studio test lint seed-dataset pull-dataset eval-baseline eval compare calibrate
 
 MODEL ?= claude
 VARIANT ?= baseline
@@ -32,7 +32,7 @@ pull-dataset:
 seed-dataset:
 	uv run rei setup-langsmith --datasets
 
-# Paid evaluations are gated on the offline unit tests (constitution quality gate).
+# Paid evaluations are gated on the offline unit tests (quality gate).
 # Headline run: Claude only, 3 reps (~230 runs, ~$6). GLM-5.3 was evaluated once for the A/B
 # (reports/rei-baseline-glm-9ec130fb.md) and is no longer run.
 eval-baseline: test
@@ -46,6 +46,3 @@ compare: test
 
 calibrate:
 	uv run rei calibrate --report
-
-monitor:
-	uv run rei monitor --since 1h

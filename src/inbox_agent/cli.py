@@ -187,18 +187,6 @@ def eval_(
     console.print("Experiments: " + ", ".join(names))
 
 
-@app.command()
-def draft(
-    slice_: Annotated[str, typer.Option("--slice", help="dataset slice to draft for")],
-    n: Annotated[int, typer.Option(help="number of drafts")] = 5,
-) -> None:
-    """Draft candidate emails for a slice into data/datasets/drafts/ (human review required)."""
-    from .evals.draft import draft as run_draft
-
-    for row in run_draft(slice_, n):
-        console.print(Panel(row["body"], title=row["subject"], subtitle=row["why_tricky"]))
-
-
 @app.command("compare")
 def compare(
     before: Annotated[str, typer.Argument(help="raw results file or experiment prefix (before)")],
@@ -220,23 +208,14 @@ def compare(
 
 @app.command()
 def calibrate(
-    build: Annotated[bool, typer.Option("--build", help="build the calibration set")] = False,
-    extend: Annotated[bool, typer.Option("--extend", help="add round-2 replies")] = False,
-    push: Annotated[bool, typer.Option("--push", help="queue replies for human labels")] = False,
+    push: Annotated[bool, typer.Option("--push", help="queue unlabeled replies")] = False,
     report: Annotated[bool, typer.Option("--report", help="judge vs human agreement")] = False,
-    enqueue: Annotated[bool, typer.Option("--enqueue", help="re-queue recorded runs")] = False,
 ) -> None:
     """Calibrate the Fair Housing LLM judge against blind human labels."""
     from .evals import calibrate as C
 
-    if build:
-        C.build()
-    if extend:
-        C.extend()
     if push:
         C.push()
-    if enqueue:
-        C.enqueue()
     if report:
         C.report()
 
@@ -244,14 +223,13 @@ def calibrate(
 @app.command("setup-langsmith")
 def setup_langsmith(
     datasets: Annotated[bool, typer.Option("--datasets")] = False,
-    online: Annotated[bool, typer.Option("--online")] = False,
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
     force: Annotated[bool, typer.Option("--force", help="overwrite LangSmith edits")] = False,
 ) -> None:
-    """Create/verify LangSmith datasets, queues, and the automation rule."""
+    """Verify the LangSmith connection, or seed the datasets with --datasets."""
     from .evals import langsmith_setup
 
-    langsmith_setup.main(datasets=datasets, online=online, dry_run=dry_run, force=force)
+    langsmith_setup.main(datasets=datasets, dry_run=dry_run, force=force)
 
 
 @app.command("lint-dataset")
