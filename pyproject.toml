@@ -24,6 +24,9 @@ dependencies = [
 
 [project.optional-dependencies]
 jev = ["langchain-typesafe==0.0.1a3"]
+ui = [
+    "streamlit>=1.65.0",
+]
 
 [project.scripts]
 rei = "inbox_agent.cli:app"
