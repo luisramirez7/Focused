@@ -74,17 +74,46 @@ def _evaluate(target, data, evaluators, prefix, reps, metadata, summary=()):
         num_repetitions=reps,
         max_concurrency=int(os.environ.get("REI_EVAL_CONCURRENCY", "4")),
         metadata=metadata,
+        # Evaluator calls are not traced (scores still attach as feedback). Tracing them created
+        # ~20 extra traces per run and exhausted the workspace's monthly trace limit.
+        disable_evaluator_tracing=True,
     )
+
+
+# Rough per-email cost (USD) from the baseline; used only for the pre-run budget check.
+EST_COST_PER_RUN = {"claude": 0.03, "glm": 0.007}
+MAX_RUNS = int(os.environ.get("REI_EVAL_MAX_RUNS", "250"))
+MAX_COST = float(os.environ.get("REI_EVAL_MAX_COST", "8"))
+
+
+class BudgetExceeded(RuntimeError):
+    pass
+
+
+def budget_check(model: str, n_full: int, n_first: int, reps: int, confirmed: bool) -> str:
+    runs = (n_full + n_first) * reps
+    cost = n_full * reps * EST_COST_PER_RUN.get(model, 0.03)
+    summary = (
+        f"{model}: {n_full} full + {n_first} first-step examples x {reps} reps = {runs} "
+        f"runs, est. ${cost:.2f}"
+    )
+    if (runs > MAX_RUNS or cost > MAX_COST) and not confirmed:
+        raise BudgetExceeded(
+            f"{summary} exceeds the cap ({MAX_RUNS} runs / ${MAX_COST:.0f}). "
+            "Narrow with --split/--slice/--reps, or pass --yes."
+        )
+    return summary
 
 
 def run(
     model: str,
     variant: str,
-    reps: int = 3,
+    reps: int = 1,
     split: str = "all",
     slice_: str | None = None,
     level: str = "all",
     extra_evaluators: list | None = None,
+    confirmed: bool = False,
 ) -> list[str]:
     metadata = {
         "model": model,
@@ -96,7 +125,17 @@ def run(
         "slice": slice_ or "all",
     }
     experiments = []
-    if level in ("all", "retrieval"):
+    golden = load_examples(GOLDEN, split, slice_) if level != "retrieval" else []
+    # Level 2 only scores examples that name an acceptable first tool.
+    first_step = [e for e in golden if (e.outputs or {}).get("expected_first_tool")]
+    n_full = len(golden) if level in ("all", "full") else 0
+    n_first = len(first_step) if level in ("all", "first-step") else 0
+    if level != "retrieval":
+        console.print(
+            "[bold]Budget:[/bold] " + budget_check(model, n_full, n_first, reps, confirmed)
+        )
+    # The retriever does not depend on the agent model: run it only when asked for explicitly.
+    if level == "retrieval":
         res = _evaluate(
             retriever_target(),
             load_examples(RETRIEVAL),
@@ -106,11 +145,10 @@ def run(
             {**metadata, "level": "retrieval"},
         )
         experiments.append(write_report(res, "retrieval", metadata))
-    golden = load_examples(GOLDEN, split, slice_) if level != "retrieval" else []
-    if level in ("all", "first-step"):
+    if level in ("all", "first-step") and first_step:
         res = _evaluate(
             first_step_target(model, variant),
-            golden,
+            first_step,
             D.FIRST_STEP_EVALUATORS,
             f"rei-{variant}-{model}-firststep",
             reps,
@@ -162,6 +200,21 @@ def results_frame(res, examples: list | None = None) -> pd.DataFrame:
     return df
 
 
+# USD per million tokens (input, output) — research R5; used only when LangSmith has no cost.
+PRICES = {"claude": (2.0, 10.0), "glm": (1.40, 4.40)}
+
+
+def local_cost(df: pd.DataFrame) -> float | None:
+    model = str(df.get("model", pd.Series(["glm"])).iloc[0]) if "model" in df else None
+    usage = df["outputs.usage"].dropna()
+    if usage.empty or model not in PRICES:
+        return None
+    pin, pout = PRICES[model]
+    tokens_in = sum(u.get("input_tokens", 0) for u in usage)
+    tokens_out = sum(u.get("output_tokens", 0) for u in usage)
+    return (tokens_in * pin + tokens_out * pout) / 1e6
+
+
 def experiment_stats(name: str, df: pd.DataFrame) -> dict:
     out = {"total_cost": None, "latency_p50": None, "latency_p95": None, "runs": len(df)}
     try:
@@ -169,6 +222,9 @@ def experiment_stats(name: str, df: pd.DataFrame) -> dict:
         out["total_cost"] = float(project.total_cost) if project.total_cost is not None else None
     except Exception as e:  # stats are best-effort; never fail the report
         console.print(f"[yellow]Could not read project stats: {e}[/yellow]")
+    if not out["total_cost"] and "outputs.usage" in df:
+        out["total_cost"] = local_cost(df)
+        out["cost_source"] = "computed from token usage (LangSmith had no cost data)"
     if "execution_time" in df:
         out["latency_p50"] = S.percentile(df["execution_time"].dropna(), 50)
         out["latency_p95"] = S.percentile(df["execution_time"].dropna(), 95)
@@ -178,6 +234,10 @@ def experiment_stats(name: str, df: pd.DataFrame) -> dict:
 def write_report(res, level: str, metadata: dict, examples: list | None = None) -> str:
     name = res.experiment_name
     df = results_frame(res, examples)
+    df["model"] = metadata["model"]
+    raw = REPORTS_DIR / "raw" / f"{name}.jsonl"
+    raw.parent.mkdir(parents=True, exist_ok=True)
+    df.to_json(raw, orient="records", lines=True, default_handler=str)
     stats = experiment_stats(name, df)
     model = (
         settings().fireworks_embedding_model.split("/")[-1]
@@ -261,7 +321,7 @@ def _confusion_section(df: pd.DataFrame) -> list[str]:
     m = confusion(outs, refs)
     lines = [
         "",
-        "## Outcome confusion matrix (rows = expected, columns = predicted, all runs)",
+        "## Outcome confusion matrix, lenient (an acceptable alternative counts as correct)",
         "",
         "| expected \\ predicted | " + " | ".join(CLASSES) + " |",
         "|" + "---|" * (len(CLASSES) + 1),
@@ -269,5 +329,28 @@ def _confusion_section(df: pd.DataFrame) -> list[str]:
     for e in CLASSES:
         if sum(m[e].values()):
             lines.append(f"| {e} | " + " | ".join(str(m[e][p]) for p in CLASSES) + " |")
-    lines += ["", "<!-- raw: " + json.dumps(m) + " -->"]
+    strict = confusion(
+        outs,
+        [
+            {
+                "expected_outcome": r["expected_outcome"],
+                "acceptable_outcomes": [r["expected_outcome"]],
+            }
+            for r in refs
+        ],
+    )
+    lines += [
+        "",
+        "## Strict confusion matrix (vs the single expected_outcome)",
+        "",
+        "Shows the agent's tendencies (e.g. escalating where a reply was the primary label) "
+        "even when the alternative was acceptable.",
+        "",
+        "| expected \\ predicted | " + " | ".join(CLASSES) + " |",
+        "|" + "---|" * (len(CLASSES) + 1),
+    ]
+    for e in CLASSES:
+        if sum(strict[e].values()):
+            lines.append(f"| {e} | " + " | ".join(str(strict[e][p]) for p in CLASSES) + " |")
+    lines += ["", "<!-- raw: " + json.dumps({"lenient": m, "strict": strict}) + " -->"]
     return lines

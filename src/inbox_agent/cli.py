@@ -166,20 +166,24 @@ def run(
 
 @app.command("eval")
 def eval_(
-    model: Annotated[str, typer.Option(help="claude | glm")] = "glm",
+    model: Annotated[str, typer.Option(help="claude (default) | glm")] = "claude",
     variant: Annotated[str, typer.Option(help="experiment variant name")] = "baseline",
-    reps: Annotated[int, typer.Option(help="repetitions per example")] = 3,
+    reps: Annotated[int, typer.Option(help="repetitions per example (3 for headline runs)")] = 1,
     split: Annotated[str, typer.Option(help="dev | heldout | all")] = "all",
     slice_: Annotated[str | None, typer.Option("--slice", help="only this slice")] = None,
     level: Annotated[str, typer.Option(help="all | retrieval | first-step | full")] = "all",
+    yes: Annotated[bool, typer.Option("--yes", help="allow runs above the budget cap")] = False,
 ) -> None:
-    """Run LangSmith experiments and write reports to reports/."""
+    """Run LangSmith experiments and write reports to reports/ (budget-capped)."""
     from .evals import run_eval
 
     try:
-        names = run_eval.run(model, variant, reps, split, slice_, level)
+        names = run_eval.run(model, variant, reps, split, slice_, level, confirmed=yes)
     except ConfigError as e:
         exit_on_config_error(e)
+    except run_eval.BudgetExceeded as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(2) from None
     console.print("Experiments: " + ", ".join(names))
 
 
