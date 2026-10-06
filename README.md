@@ -15,7 +15,8 @@ a step limit.
 **How it's evaluated.** 66 human-reviewed emails across nine slices (normal, edge, grounding,
 Fair Housing, seller confidentiality, out-of-scope, prompt injection, tool failure, PII), scored
 at five levels from retrieval to final reply. Deterministic checks wherever a right answer exists;
-an LLM judge, calibrated against my labels, for Fair Housing compliance.
+an LLM judge for Fair Housing compliance, calibrated against 50 blind human labels (it catches
+explicit steering but missed 3 of 8 subtle cases, so it is a monitor, not the only gate).
 
 **What the evaluation found and what changed.**
 
@@ -33,7 +34,8 @@ policy question, while the labeled policy says to close them directly and escala
 human must act. Over-escalation was invisible in the lenient metrics (99% "correct outcome",
 because escalating was *allowed*) and obvious in the strict confusion matrix. Prompt v1 fixed it
 (−27 points, 95% CI −40 to −14, and the drop held on the held-out split) without moving any
-other metric beyond noise. 66 emails × 3 runs per side, both re-graded with the same labels.
+other metric beyond noise. 3 runs per email, both sides re-graded with the same labels; paired
+changes use the 65 emails both runs share (G-066 was added before the v1 run).
 
 **Three failures worth reading** (traces linked in [Viewing traces](#viewing-traces-and-runs)):
 
@@ -94,6 +96,12 @@ flowchart LR
 
 - **Output schema.** The final answer is a validated `Outcome` (LangChain `ToolStrategy`), the
   same mechanism for every model so the model comparison stays fair.
+- **Retrieval.** Two kinds on purpose. Policy questions use semantic search: each section of
+  the 15 policy docs is a chunk, embedded with Qwen3-Embedding-8B in an in-memory vector store,
+  top-4 similarity (recall@4 100% on 26 queries, which also means that test set is too easy).
+  Listings use exact keyword lookup on address and description: an embedding would happily rank
+  "24 Oak Ave" next to "42 Oak St", and a showing at the wrong house is a trust failure. The model
+  turns fuzzy descriptions into search terms, and ambiguous matches lead to `clarify`.
 - **Grounding.** Tools never return the seller's confidential notes; a leak can only come from
   hallucination or manipulation, which is what the evals probe.
 - **Data.** Harborview Realty is fictional: 12 listings, 10 contacts, showing slots and 15 policy
@@ -125,14 +133,24 @@ answer, including `numeric_claims_grounded` (every price, fee, square footage an
 in a reply must appear in that run's tool outputs). One LLM judge (Claude Haiku 4.5) scores the
 judgment call that phrase lists can't: Fair Housing steering.
 
-**Judge calibration.** 30 replies (20 real agent replies, 10 seeded with steering of varying
-subtlety) labeled blind in a LangSmith annotation queue against a written rubric
-(`data/rubrics/fair_housing_ok.md`), then compared with the judge. Agreement was 100% (Cohen's
-kappa 1.00 on the 12 held-out replies, 30/30 overall), including two compliant replies written to
-sit near the line. The honest reading: the judge separates steering from compliant refusals and
-doesn't over-flag replies that merely mention safety or disability, but the failing cases were
-seeded and explicit, and no real reply failed, so its precision on genuinely ambiguous wording is
-untested. Details: [reports/calibration.md](reports/calibration.md).
+**Judge calibration.** 50 replies labeled blind in a LangSmith annotation queue against a
+written rubric (`data/rubrics/fair_housing_ok.md`), then compared with the judge, in two rounds:
+
+| | Replies | Agreement | Cohen's kappa |
+|---|---|---|---|
+| Round 1: real agent replies + explicit seeded steering | 30 | 100% | 1.00 |
+| Round 2: borderline (8 agent replies to bait emails, 12 hand-written) | 20 | 85% | 0.67 |
+| All, held-out split | 25 | 92% | 0.80 |
+
+Round 1's perfect score only showed the judge isn't broken, so round 2 went looking for its
+limits. Every disagreement is the dangerous kind: the judge **passed 3 replies I failed**, and
+never flagged one I passed. All three state neighborhood facts in answer to a protected-class
+question (flat sidewalks for a wheelchair user, a synagogue's walking distance for a buyer who
+keeps Shabbat, "busier in the evenings" for a "young couple vs retirees" question). One is a judge
+error under the current rubric; two are gaps in the rubric. The agent itself passed all 8 bait
+emails. I stopped there rather than revise the judge: the held-out disagreements have been seen,
+so a revised judge would need a fresh labeled batch to prove anything. Details:
+[reports/calibration.md](reports/calibration.md).
 
 **Honest numbers.** Repetitions are averaged per example before bootstrapping confidence
 intervals over examples; before/after uses paired intervals and labels differences inside the
@@ -141,7 +159,8 @@ every comparison are re-graded against the same label version (`rei compare`).
 
 ## Model comparison
 
-Both models were run once on the full baseline (65 emails × 3 runs).
+Both models were run once on the full baseline (65 emails × 3 runs; G-066 was added later, so
+neither baseline includes it).
 
 | | Claude Sonnet 5.5 | GLM-5.3 (Fireworks) |
 |---|---|---|
@@ -170,9 +189,11 @@ latency and dropped GLM from further runs to keep the evaluation budget small.
 - **Small per-slice samples.** 5–14 examples per slice; per-slice results are directional.
 - **Class imbalance.** 39 reply, 14 escalate, 6 booking, 6 clarify labels; recall for booking
   and clarify has wide intervals.
-- **One judge dimension, calibrated on an easy set.** Perfect agreement on seeded, explicit
-  steering; untested on ambiguous real wording; single labeler. Helpfulness and groundedness of
-  prose are not judged; tone is not evaluated at all.
+- **The Fair Housing judge under-flags subtle steering.** Kappa 0.67 on borderline replies,
+  with all 3 misses being missed steering (neighborhood facts tied to a protected-class question).
+  Single labeler, so there is no human–human ceiling; the borderline replies were hand-written by
+  the same model family that wrote the judge prompt. One judge dimension only: helpfulness and
+  groundedness of prose are not judged, and tone is not evaluated at all.
 - **Single-email scope.** No threads, outbound follow-ups, or real email/MLS/calendar
   integrations.
 - **Online scoring is a plan, not a running system** (below).
@@ -187,8 +208,11 @@ latency and dropped GLM from further runs to keep the evaluation budget small.
 2. **Cheap checks on every run:** the deterministic safety checks (no outcome, unapproved
    booking, confidential amounts, invented numbers, PII in reply, repeated calls) run as an online
    evaluator on 100% of traces.
-3. **Sampled judging:** the calibrated Fair Housing judge on ~5–10% of traffic, plus 100% of runs
-   that a cheap check flagged.
+3. **Sampled judging:** the Fair Housing judge on ~5–10% of traffic, plus 100% of runs that a
+   cheap check flagged or whose email touches a protected class. Because it misses subtle
+   neighborhood characterization, it routes runs to human review rather than acting as the only
+   gate; next steps are a rubric rule for neighborhood facts, a fresh labeled batch to verify it,
+   and a second labeler.
 4. **Route and alert:** a LangSmith automation rule sends low-scoring runs to an annotation queue;
    an alert fires when the average safety score drops over a 15-minute window.
 5. **Close the loop:** a reviewer confirms each flagged run; confirmed failures become labeled

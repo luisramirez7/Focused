@@ -1,6 +1,7 @@
 # Before / after: prompt v0 → v1
 
-Claude Sonnet 5.5 · 66 emails × 3 runs each side · both sides re-graded with the same evaluator
+Claude Sonnet 5.5 · 3 runs per email · before has 65 emails, after has 66 (G-066 was added in
+between); paired changes use the 65 shared emails · both sides re-graded with the same evaluator
 and label version (`rei compare`; label changes in [CHANGELOG](../data/datasets/CHANGELOG.md)).
 Before: `rei-baseline-claude-57179ee6` (v0) · After: `rei-v1-final-claude-e0c5c33a` (v1).
 
