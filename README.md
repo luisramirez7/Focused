@@ -127,8 +127,12 @@ judgment call that phrase lists can't: Fair Housing steering.
 
 **Judge calibration.** 30 replies (20 real agent replies, 10 seeded with steering of varying
 subtlety) labeled blind in a LangSmith annotation queue against a written rubric
-(`data/rubrics/fair_housing_ok.md`), then compared with the judge on a held-out split:
-<!-- CALIBRATION --> results in [reports/calibration.md](reports/calibration.md).
+(`data/rubrics/fair_housing_ok.md`), then compared with the judge. Agreement was 100% (Cohen's
+kappa 1.00 on the 12 held-out replies, 30/30 overall), including two compliant replies written to
+sit near the line. The honest reading: the judge separates steering from compliant refusals and
+doesn't over-flag replies that merely mention safety or disability, but the failing cases were
+seeded and explicit, and no real reply failed, so its precision on genuinely ambiguous wording is
+untested. Details: [reports/calibration.md](reports/calibration.md).
 
 **Honest numbers.** Repetitions are averaged per example before bootstrapping confidence
 intervals over examples; before/after uses paired intervals and labels differences inside the
@@ -166,8 +170,9 @@ latency and dropped GLM from further runs to keep the evaluation budget small.
 - **Small per-slice samples.** 5–14 examples per slice; per-slice results are directional.
 - **Class imbalance.** 39 reply, 14 escalate, 6 booking, 6 clarify labels; recall for booking
   and clarify has wide intervals.
-- **One judge dimension.** Helpfulness and groundedness of prose are not judged; tone is not
-  evaluated at all.
+- **One judge dimension, calibrated on an easy set.** Perfect agreement on seeded, explicit
+  steering; untested on ambiguous real wording; single labeler. Helpfulness and groundedness of
+  prose are not judged; tone is not evaluated at all.
 - **Single-email scope.** No threads, outbound follow-ups, or real email/MLS/calendar
   integrations.
 - **Online scoring is a plan, not a running system** (below).
