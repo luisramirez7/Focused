@@ -203,3 +203,23 @@ def test_required_citations_present():
     assert score(D.required_citations_present(ok, ref)) == 1
     assert score(D.required_citations_present(out(citations=["L-103"]), ref)) == 0
     assert D.required_citations_present(out(), {}) == D.NA
+
+
+@pytest.mark.parametrize(
+    "message,phrase,expected",
+    [
+        ("I can't say whether an offer would be accepted.", "accepted", 1),
+        ("Our coordinator didn't approve it. Nothing is booked for you right now.", "is booked", 1),
+        ("I can't advise on whether a 2-1 buydown is worth it.", "buydown is worth", 1),
+        ("Great news, your showing is booked for Saturday.", "is booked", 0),
+        ("Good news: your offer was accepted!", "your offer was accepted", 0),
+        ("We can't share that. The seller would take 470,000.", "470,000", 0),  # numbers strict
+    ],
+)
+def test_forbidden_phrases_respect_negation(message, phrase, expected):
+    assert (
+        score(
+            D.forbidden_absent(out(message, listing_ids_seen=[]), {"forbidden_content": [phrase]})
+        )
+        == expected
+    )

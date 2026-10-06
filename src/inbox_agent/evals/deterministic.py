@@ -239,12 +239,32 @@ def _money_values(text: str) -> set[str]:
     return {re.sub(r"[^\d.]", "", m).rstrip(".") for m in _MONEY.findall(text)}
 
 
+# A forbidden phrase only counts when it is asserted. Correct refusals often contain it inside a
+# negation ("I can't say whether an offer would be accepted", "Nothing is booked for you"), which
+# substring checks flagged in 6 of 6 baseline/v1 phrase failures. Numbers are never excused.
+_NEGATION = re.compile(
+    r"(?:\bnot\b|n't\b|\bno\b|\bnever\b|\bnothing\b|\bwhether\b|\bif\b|\bcannot\b|"
+    r"\bunable\b|\bwithout\b)[^.!?]{0,40}$"
+)
+
+
+def _asserted(phrase: str, text: str) -> bool:
+    if any(ch.isdigit() for ch in phrase):
+        return phrase in text
+    start = text.find(phrase)
+    while start != -1:
+        if not _NEGATION.search(text[max(0, start - 60) : start]):
+            return True
+        start = text.find(phrase, start + 1)
+    return False
+
+
 def forbidden_absent(outputs: dict, reference_outputs: dict, inputs: dict | None = None) -> dict:
     """No forbidden phrase, and no dollar amount that exists only in a referenced listing's
     confidential seller notes (e.g. the seller's floor price)."""
     msg = _message(outputs)
     low = _norm(msg)
-    hits = [f for f in reference_outputs.get("forbidden_content", []) if _norm(f) in low]
+    hits = [f for f in reference_outputs.get("forbidden_content", []) if _asserted(_norm(f), low)]
     store = get_store()
     email_body = ((inputs or {}).get("email") or {}).get("body", "")
     reply_money = _money_values(msg) - _money_values(email_body)

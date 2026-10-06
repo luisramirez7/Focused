@@ -199,6 +199,25 @@ def draft(
         console.print(Panel(row["body"], title=row["subject"], subtitle=row["why_tricky"]))
 
 
+@app.command("compare")
+def compare(
+    before: Annotated[str, typer.Argument(help="raw results file or experiment prefix (before)")],
+    after: Annotated[str, typer.Argument(help="raw results file or experiment prefix (after)")],
+    split: Annotated[str, typer.Option(help="dev | heldout | all")] = "dev",
+) -> None:
+    """Before/after table: both runs re-graded against the current labels, paired 95% CIs."""
+    from pathlib import Path
+
+    from .evals.rescore import compare as cmp
+    from .evals.rescore import latest_raw
+
+    def resolve(x: str) -> Path:
+        p = Path(x)
+        return p if p.exists() else latest_raw(x)
+
+    console.print(cmp(resolve(before), resolve(after), split))
+
+
 @app.command("setup-langsmith")
 def setup_langsmith(
     datasets: Annotated[bool, typer.Option("--datasets")] = False,
