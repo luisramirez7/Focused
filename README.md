@@ -4,6 +4,11 @@ An email assistant for a (fictional) real estate brokerage that answers buyers, 
 with a human's approval, and escalates what it shouldn't handle — plus the evaluations that show
 where it can be trusted and where it can't.
 
+**For reviewers:** [quickstart](#quickstart) · [agent diagram](#how-it-works) ·
+[traces and eval runs](#viewing-traces-and-runs) (public links) ·
+[before/after](#the-story-in-5-minutes) · [datasets and evaluators](#the-evaluations) ·
+[known failures](#known-failures-and-limitations) · screen recording: _link to come_
+
 ## The story in 5 minutes
 
 **The agent.** One inbound buyer email in, exactly one outcome out: `reply`, `propose_booking`,
@@ -174,7 +179,22 @@ latency and dropped GLM from further runs to keep the evaluation budget small.
 
 ## Viewing traces and runs
 
-<!-- SHARE LINKS: public LangSmith share links for the dataset and the key experiments go here. -->
+Public LangSmith links (no account needed):
+
+| What | Link |
+|---|---|
+| Dataset `rei-golden`, with every experiment run on it | [dataset and experiments](https://smith.langchain.com/public/36968e9f-fdb6-4142-acd8-38aea1da705d/d) |
+| Before/after, side by side (baseline v0 vs final v1, 3 reps) | [comparison view](https://smith.langchain.com/public/36968e9f-fdb6-4142-acd8-38aea1da705d/d/compare?selectedSessions=c49d9c03-77f0-4d95-936a-ffd079cbefaf%2C63a240d3-6444-42d2-a854-cd88ba1effb4) |
+| Failure 1: no email in, invented request out (Studio) | [trace](https://smith.langchain.com/public/e081fe65-27ad-4caf-9d32-db860d6f920b/r) |
+| Failure 2: a correct refusal that the old phrase check failed | [trace](https://smith.langchain.com/public/f1eae03e-e0be-47b2-afe8-3f098a137336/r) |
+| Failure 3: G-037 baseline, looks up the pending listing before refusing | [trace](https://smith.langchain.com/public/d3cd3328-6ee5-439c-b5a5-a2507e3ae369/r) |
+| Failure 3 fixed: G-037 on prompt v1, policy search only | [trace](https://smith.langchain.com/public/c7a68a0c-65e2-41dc-b2fd-8213f2d90a3d/r) |
+
+The experiments that count are `rei-baseline-claude-57179ee6` (v0), `rei-v1-claude-8543bccd`
+(v1 on dev), `rei-v1-final-claude-e0c5c33a` (v1, all 66) and `rei-baseline-glm-9ec130fb`; the
+`rei-harness-check-*` runs were smoke tests of the harness. Experiment scores in LangSmith are
+as graded at run time; the numbers in this README come from re-grading both sides with the
+final labels and evaluators (`rei compare`), so a few cells differ.
 
 - **Reports in the repo:** `reports/*.md` (one per experiment), raw per-run results in
   `reports/raw/*.jsonl`.
