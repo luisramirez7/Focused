@@ -7,7 +7,7 @@ where it can be trusted and where it can't.
 **For reviewers:** [quickstart](#quickstart) · [agent diagram](#how-it-works) ·
 [traces and eval runs](#viewing-traces-and-runs) (public links) ·
 [before/after](#the-story-in-5-minutes) · [datasets and evaluators](#the-evaluations) ·
-[known failures](#known-failures-and-limitations) · screen recording: _link to come_
+[known failures](#known-failures-and-limitations) · [screen recording](https://www.loom.com/share/570a03fe807b4983b88938d7d4fd59e0)
 
 ## The story in 5 minutes
 
