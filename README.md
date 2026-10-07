@@ -197,9 +197,9 @@ latency and dropped GLM from further runs to keep the evaluation budget small.
   groundedness of prose are not judged, and tone is not evaluated at all.
 - **Single-email scope.** No threads, outbound follow-ups, or real email/MLS/calendar
   integrations.
-- **Online scoring is partly live** (below): four safety checks run on every trace; the online
-  judge is configured but off, the other cheap checks and the alert are not built, and the
-  "production" project also holds smoke and demo runs.
+- **Online scoring is partly live** (below): four safety checks on every trace and the Fair
+  Housing judge on every finished reply; the other cheap checks and the alert are not built, and
+  the "production" project also holds smoke and demo runs.
 - **Trace budget.** The first baseline exhausted the workspace's monthly trace limit because
   every evaluator call was traced; evaluator tracing is now off and every eval run is
   budget-capped.
@@ -219,10 +219,9 @@ CLI, Streamlit and Studio runs are all covered.
    coordinator's decision), so the paused one is not failed for having no outcome and the resumed
    one is checked against the recorded decision. Not yet online: invented numbers, confidential
    amounts and PII in the reply, which need tool outputs or listing data inside the evaluator.
-3. **Judging** (**configured, off**): the Fair Housing judge (`rei-fair-housing-judge`, the
-   calibrated rubric on Haiku 4.5, capped at $1/week) is attached to traces that end in a reply.
-   Its field mapping (buyer email, reply) is checked on a real trace, but it runs inside
-   LangSmith, so it stays off until the workspace has an Anthropic key and has not scored yet. At real
+3. **Judging** (**live**): the Fair Housing judge (`rei-fair-housing-judge`, the calibrated
+   rubric on Haiku 4.5, capped at $1/week) scores every trace that ends in a reply, writing
+   `fair_housing_ok` plus its `reasoning`. It runs inside LangSmith with a workspace secret. At real
    volume it would sample ~5–10% of traffic plus 100% of runs a cheap check flagged or whose
    email touches a protected class. Because it misses subtle neighborhood characterization, it
    routes runs to human review rather than acting as the only gate; next steps are a rubric rule

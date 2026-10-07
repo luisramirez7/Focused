@@ -1,15 +1,17 @@
 """Create the online evaluators and rules on the production tracing project.
 
     uv run python -m inbox_agent.evals.online.setup [--backfill-from 2026-10-05]
+        [--enable-judge | --disable-judge]
 
-Creates (skipping anything that already exists by name):
+Creates, or updates in place when one exists by name:
 - code evaluator `rei-safety-checks` (safety_checks.py) on 100% of agent root traces;
 - LLM evaluator `rei-fair-housing-judge` (hub prompt of the same name, Haiku 4.5) on agent
-  traces that finished with a reply, with a weekly spend cap. Created disabled: LangSmith runs
-  the judge with the workspace secret ANTHROPIC_API_KEY, which must be added in the UI first;
+  traces that finished with a reply, with a weekly spend cap. LangSmith runs the judge with the
+  workspace secret ANTHROPIC_API_KEY, so a new judge rule starts disabled; without a flag an
+  existing rule keeps its current on/off state;
 - a routing rule that adds any run failing a safety check or the judge to an annotation queue.
 
-The judge prompt is pushed separately (push_judge_prompt) because it pins a hub commit.
+The judge evaluator pins the hub commit that push_judge_prompt returns.
 """
 
 from __future__ import annotations
@@ -107,12 +109,18 @@ def _rule(client, rules: list, **body) -> str:
     for r in rules:
         if r["display_name"] == body["display_name"]:
             update = {k: v for k, v in body.items() if k != "backfill_from"}
+            if update.get("is_enabled") is None:  # no explicit choice: keep the current state
+                update["is_enabled"] = r["is_enabled"]
             _api(client, "PATCH", f"/runs/rules/{r['id']}", json=update)
             return r["id"]
+    if body.get("is_enabled") is None:
+        body["is_enabled"] = False
+    if not body["is_enabled"]:
+        body["backfill_from"] = None  # a disabled rule still runs its creation backfill
     return _api(client, "POST", "/runs/rules", json=body)["id"]
 
 
-def main(backfill_from: str | None = None, judge_enabled: bool = False) -> dict:
+def main(backfill_from: str | None = None, judge_enabled: bool | None = None) -> dict:
     client = _client()
     project_id = str(client.read_project(project_name=PROJECT).id)
     queues = _api(client, "GET", "/annotation-queues", params={"name": QUEUE})
@@ -178,8 +186,7 @@ def main(backfill_from: str | None = None, judge_enabled: bool = False) -> dict:
             filter=FINISHED,
             is_enabled=judge_enabled,
             spend_limit={"limit_usd": JUDGE_WEEKLY_USD, "window": "weekly"},
-            # A disabled rule still runs its creation backfill, so only backfill when enabled.
-            **(common if judge_enabled else {**common, "backfill_from": None}),
+            **common,
         ),
         "route_rule_id": _rule(
             client,
@@ -202,10 +209,14 @@ if __name__ == "__main__":
     load_dotenv()
     p = argparse.ArgumentParser()
     p.add_argument("--backfill-from", help="ISO date; only applied when a rule is created")
-    p.add_argument(
+    judge = p.add_mutually_exclusive_group()
+    judge.add_argument(
         "--enable-judge",
+        dest="judge",
         action="store_true",
-        help="create the judge rule enabled (needs the ANTHROPIC_API_KEY workspace secret)",
+        default=None,
+        help="turn the judge rule on (needs the ANTHROPIC_API_KEY workspace secret)",
     )
+    judge.add_argument("--disable-judge", dest="judge", action="store_false")
     args = p.parse_args()
-    print(json.dumps(main(args.backfill_from, args.enable_judge), indent=2))
+    print(json.dumps(main(args.backfill_from, args.judge), indent=2))
