@@ -23,6 +23,21 @@ at five levels from retrieval to final reply. Deterministic checks wherever a ri
 an LLM judge for Fair Housing compliance, calibrated against 50 blind human labels (it catches
 explicit steering but missed 3 of 8 subtle cases, so it is a monitor, not the only gate).
 
+## How it works
+
+```mermaid
+%%{init: {"flowchart": {"htmlLabels": false, "padding": 16}}}%%
+flowchart TD
+    E["Buyer email<br/>(untrusted text)"] --> P["PII redaction<br/>card, SSN, bank numbers"]
+    P --> M("Claude Sonnet 5.5<br/>create_agent loop")
+    M <-->|tool calls| T["Read-only tools<br/>listings, contacts,<br/>availability, policy search"]
+    M -->|book_showing| H[["Coordinator approval<br/>approve, edit or reject"]]
+    H --> M
+    M -->|escalate_to_agent| X["Human agent queue"]
+    M --> O["One outcome<br/>reply, propose_booking,<br/>clarify or escalate"]
+    G["Guardrails<br/>retries on transient errors<br/>per-tool call budgets<br/>12-call step limit"] -.- M
+```
+
 **What the evaluation found and what changed.**
 
 | | Baseline (prompt v0) | Prompt v1 |
@@ -81,21 +96,6 @@ uv run rei run injected-signature            # a prompt-injection attempt
 uv run rei run oak-st-hoa --fault '{"get_listing":["timeout","timeout","timeout"]}'
 uv run rei eval --split dev                  # an experiment (budget-capped; 1 rep by default)
 uv run rei compare <before.jsonl> <after.jsonl>
-```
-
-## How it works
-
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false, "padding": 16}}}%%
-flowchart TD
-    E["Buyer email<br/>(untrusted text)"] --> P["PII redaction<br/>card, SSN, bank numbers"]
-    P --> M("Claude Sonnet 5.5<br/>create_agent loop")
-    M <-->|tool calls| T["Read-only tools<br/>listings, contacts,<br/>availability, policy search"]
-    M -->|book_showing| H[["Coordinator approval<br/>approve, edit or reject"]]
-    H --> M
-    M -->|escalate_to_agent| X["Human agent queue"]
-    M --> O["One outcome<br/>reply, propose_booking,<br/>clarify or escalate"]
-    G["Guardrails<br/>retries on transient errors<br/>per-tool call budgets<br/>12-call step limit"] -.- M
 ```
 
 - **Output schema.** The final answer is a validated `Outcome` (LangChain `ToolStrategy`), the
