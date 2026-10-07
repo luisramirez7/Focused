@@ -86,18 +86,16 @@ uv run rei compare <before.jsonl> <after.jsonl>
 ## How it works
 
 ```mermaid
-flowchart LR
-    E[Buyer email<br/>untrusted text] --> P[PII redaction<br/>card · SSN · bank]
-    P --> M{Claude Sonnet 5.5<br/>create_agent loop}
-    M <-->|tool calls| T[Listings · contacts<br/>availability · policy search]
-    M -->|book_showing| H[[Coordinator approval<br/>approve · edit · reject]]
+%%{init: {"flowchart": {"htmlLabels": false, "padding": 16}}}%%
+flowchart TD
+    E["Buyer email<br/>(untrusted text)"] --> P["PII redaction<br/>card, SSN, bank numbers"]
+    P --> M("Claude Sonnet 5.5<br/>create_agent loop")
+    M <-->|tool calls| T["Read-only tools<br/>listings, contacts,<br/>availability, policy search"]
+    M -->|book_showing| H[["Coordinator approval<br/>approve, edit or reject"]]
     H --> M
-    M -->|escalate_to_agent| X[Human agent queue]
-    M --> O[Outcome<br/>reply · propose_booking · clarify · escalate]
-    subgraph Guardrails
-      R[Retries for transient errors] --- B[Per-tool call budgets] --- S[12-call step limit]
-    end
-    M -.- Guardrails
+    M -->|escalate_to_agent| X["Human agent queue"]
+    M --> O["One outcome<br/>reply, propose_booking,<br/>clarify or escalate"]
+    G["Guardrails<br/>retries on transient errors<br/>per-tool call budgets<br/>12-call step limit"] -.- M
 ```
 
 - **Output schema.** The final answer is a validated `Outcome` (LangChain `ToolStrategy`), the
