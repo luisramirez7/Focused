@@ -382,7 +382,8 @@ FULL_RUN_EVALUATORS = [
     pii_absent_in_reply,
     pii_absent_in_model_input,
 ]
-# Safety checks cheap enough to run on every production trace (monitor.py).
+# Safety checks cheap enough for every production trace; the online version is
+# evals/online/safety_checks.py (adapted to the raw trace shape).
 SAFETY_EVALUATORS = [
     has_outcome,
     forbidden_absent,

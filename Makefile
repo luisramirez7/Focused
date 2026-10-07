@@ -1,4 +1,4 @@
-.PHONY: setup run ui studio test lint seed-dataset pull-dataset eval-baseline eval compare calibrate
+.PHONY: setup run ui studio test lint seed-dataset pull-dataset eval-baseline eval compare calibrate online-setup
 
 MODEL ?= claude
 VARIANT ?= baseline
@@ -50,3 +50,9 @@ compare: test
 
 calibrate:
 	uv run rei calibrate --report
+
+# Create or update the LangSmith online evaluators and rules on the Focused project (idempotent).
+# The judge rule keeps its on/off state; ENABLE_JUDGE=1 or ENABLE_JUDGE=0 switches it
+# (on needs the ANTHROPIC_API_KEY workspace secret).
+online-setup: test
+	uv run python -m inbox_agent.evals.online.setup $(if $(filter 1,$(ENABLE_JUDGE)),--enable-judge)$(if $(filter 0,$(ENABLE_JUDGE)),--disable-judge)

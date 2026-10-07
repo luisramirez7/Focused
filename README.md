@@ -180,7 +180,8 @@ latency and dropped GLM from further runs to keep the evaluation budget small.
   `reports/raw/*.jsonl`.
 - **LangSmith:** project `Focused` (tag `rei`), dataset `rei-golden`, experiments
   `rei-baseline-claude-*` (prompt v0), `rei-v1-*` (prompt v1), `rei-baseline-glm-*`; annotation
-  queue `rei-judge-calibration`.
+  queues `rei-judge-calibration` and `rei-online-review`. Online scores are feedback on the
+  traces in `Focused` (feedback panel, runs-table columns, Monitor tab).
 
 ## Known failures and limitations
 
@@ -197,25 +198,38 @@ latency and dropped GLM from further runs to keep the evaluation budget small.
   groundedness of prose are not judged, and tone is not evaluated at all.
 - **Single-email scope.** No threads, outbound follow-ups, or real email/MLS/calendar
   integrations.
-- **Online scoring is a plan, not a running system** (below).
+- **Online scoring is partly live** (below): four safety checks on every trace and the Fair
+  Housing judge on every finished reply; the other cheap checks and the alert are not built, and
+  the "production" project also holds smoke and demo runs.
 - **Trace budget.** The first baseline exhausted the workspace's monthly trace limit because
   every evaluator call was traced; evaluator tracing is now off and every eval run is
   budget-capped.
 
 ## Evaluating it in production
 
-1. **Trace everything** with metadata for prompt version, model and email category; PII is
-   anonymized before traces leave the process.
-2. **Cheap checks on every run:** the deterministic safety checks (no outcome, unapproved
-   booking, confidential amounts, invented numbers, PII in reply, repeated calls) run as an online
-   evaluator on 100% of traces.
-3. **Sampled judging:** the Fair Housing judge on ~5–10% of traffic, plus 100% of runs that a
-   cheap check flagged or whose email touches a protected class. Because it misses subtle
-   neighborhood characterization, it routes runs to human review rather than acting as the only
-   gate; next steps are a rubric rule for neighborhood facts, a fresh labeled batch to verify it,
-   and a second labeler.
-4. **Route and alert:** a LangSmith automation rule sends low-scoring runs to an annotation queue;
-   an alert fires when the average safety score drops over a 15-minute window.
+What runs today is marked **live**; the rest is the plan. Setup is code in
+`src/inbox_agent/evals/online/` (`make online-setup`), and every check scores the raw trace, so
+CLI, Streamlit and Studio runs are all covered.
+
+1. **Trace everything** (**live**) with metadata for prompt version, model and email category;
+   PII is anonymized before traces leave the process.
+2. **Cheap checks on every run** (**live** for four): a LangSmith code evaluator,
+   `rei-safety-checks`, scores 100% of `rei-inbox-agent` traces for `has_outcome`,
+   `no_unapproved_booking`, `no_repeated_calls` and `citations_valid`, with the same logic as the
+   offline checks. One adaptation: an approved booking is two traces (paused, then resumed with the
+   coordinator's decision), so the paused one is not failed for having no outcome and the resumed
+   one is checked against the recorded decision. Not yet online: invented numbers, confidential
+   amounts and PII in the reply, which need tool outputs or listing data inside the evaluator.
+3. **Judging** (**live**): the Fair Housing judge (`rei-fair-housing-judge`, the calibrated
+   rubric on Haiku 4.5, capped at $1/week) scores every trace that ends in a reply, writing
+   `fair_housing_ok` plus its `reasoning`. It runs inside LangSmith with a workspace secret. At real
+   volume it would sample ~5–10% of traffic plus 100% of runs a cheap check flagged or whose
+   email touches a protected class. Because it misses subtle neighborhood characterization, it
+   routes runs to human review rather than acting as the only gate; next steps are a rubric rule
+   for neighborhood facts, a fresh labeled batch to verify it, and a second labeler.
+4. **Route** (**live**) **and alert** (plan): an automation rule adds any run that fails a safety
+   check or the judge to the `rei-online-review` annotation queue; an alert should fire when the
+   average safety score drops over a 15-minute window.
 5. **Close the loop:** a reviewer confirms each flagged run; confirmed failures become labeled
    examples in the golden set (regression-first), and the next prompt or model change must beat
    the current version on the same dataset version before release.
@@ -237,6 +251,7 @@ evaluator bugs were found during that review rather than by the assistant.
 ```text
 src/inbox_agent/        agent, tools, middleware wiring, CLI (rei)
 src/inbox_agent/evals/  evaluators, experiments, rescoring, calibration, dataset lint and sync
+  online/               LangSmith online evaluators and rules (safety checks, judge, routing)
 data/                   fixtures, policy docs, sample emails, datasets, rubrics, calibration set
 reports/                analyses, final experiment reports, raw results (superseded runs in archive/)
 tests/                  offline unit and integration tests
